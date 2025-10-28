@@ -1054,11 +1054,12 @@ function App() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative w-full h-48 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-blue-800 to-blue-600">
+                <div className="relative w-full h-64 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-blue-800 to-blue-600">
                   <img 
                     src={player.image} 
                     alt={player.name} 
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-cover"
+                    style={{ objectPosition: 'center 20%' }}
                     onError={(e) => {
                       console.error('Failed to load player image:', player.image);
                       e.target.style.display = 'none';
@@ -1107,11 +1108,12 @@ function App() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative w-full h-48 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-red-800 to-red-600">
+                <div className="relative w-full h-64 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-red-800 to-red-600">
                   <img 
                     src={opponent.image} 
                     alt={opponent.name} 
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-cover"
+                    style={{ objectPosition: 'center 20%' }}
                     onError={(e) => {
                       console.error('Failed to load opponent image:', opponent.image);
                       e.target.style.display = 'none';
