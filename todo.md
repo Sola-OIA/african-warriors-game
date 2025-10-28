@@ -18,5 +18,6 @@
 - [x] Improve battle area face visibility - increased height from h-48 to h-64
 - [x] Apply custom object-position (center 20%) for better face framing
 - [x] Apply improvements to both player and opponent images in battle
+- [x] Show character face prominently on victory page with custom positioning
 - [x] Ready for final checkpoint and publishing
 
