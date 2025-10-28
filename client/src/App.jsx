@@ -835,7 +835,7 @@ function App() {
                   <img 
                     src={char.image} 
                     alt={char.name} 
-                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                    className="w-full h-48 object-cover object-top group-hover:scale-110 transition-transform duration-300"
                     onLoad={() => console.log('Image loaded:', char.name, char.image)}
                     onError={(e) => {
                       console.error('Failed to load character image:', char.name, char.image);
@@ -1058,7 +1058,7 @@ function App() {
                   <img 
                     src={player.image} 
                     alt={player.name} 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-top"
                     onError={(e) => {
                       console.error('Failed to load player image:', player.image);
                       e.target.style.display = 'none';
@@ -1111,7 +1111,7 @@ function App() {
                   <img 
                     src={opponent.image} 
                     alt={opponent.name} 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-top"
                     onError={(e) => {
                       console.error('Failed to load opponent image:', opponent.image);
                       e.target.style.display = 'none';
