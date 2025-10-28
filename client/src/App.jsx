@@ -836,9 +836,10 @@ function App() {
                     src={char.image} 
                     alt={char.name} 
                     className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                    onLoad={() => console.log('Image loaded:', char.name, char.image)}
                     onError={(e) => {
                       console.error('Failed to load character image:', char.name, char.image);
-                      e.target.style.display = 'none';
+                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23' + char.color.substring(1) + '" width="200" height="200"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="white" font-size="24" font-weight="bold"%3E' + char.name + '%3C/text%3E%3C/svg%3E';
                     }}
                   />
                   <div className="absolute top-2 right-2">
