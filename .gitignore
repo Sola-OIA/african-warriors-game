@@ -104,3 +104,28 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Supabase
+supabase/.branches
+supabase/.temp
+.supabase
+
+# Claude Code
+.claude/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Testing scripts (contain credentials)
+update-hp.js
+auto-attack.js
+
+# Screenshots and test artifacts
+*.png
+nul
+
+# Lock files (using pnpm)
+package-lock.json
+
+# Downloaded files
+*.zip

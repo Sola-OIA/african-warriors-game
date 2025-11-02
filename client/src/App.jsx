@@ -7,6 +7,26 @@ import { Sword, Heart, Zap, Trophy, Coins, Sparkles, Shield, Users, Target, Tren
 import { characters, POWER_UP_COST, POWER_UP_HEAL, HEALTH_BOOST_COST, HEALTH_BOOST_HEAL, WIN_REWARD, CRITICAL_HIT_CHANCE, CRITICAL_HIT_MULTIPLIER, DAMAGE_VARIANCE, STARTING_COINS, DIFFICULTY_SETTINGS, SHOP_ITEMS, BATTLE_EVENTS } from './gameData';
 import './App.css';
 
+// Special ability descriptions for character selection
+const ABILITY_DESCRIPTIONS = {
+  lifesteal: "Heal for 15% of damage dealt",
+  growth: "Gain +5 damage per turn (max +50)",
+  dodge: "20% chance to completely avoid attacks",
+  shield: "25% chance to block 50% of damage",
+  mirage: "15% chance for opponent to miss",
+  flow: "Damage varies more wildly (±20%)",
+  rhythm: "Every 3rd attack is a guaranteed critical",
+  agility: "First attack each round is critical",
+  berserk: "Damage increases as health decreases",
+  combo: "15% chance for double damage",
+  counter: "20% chance to return 30% of damage taken",
+  reflect: "Reflect 10% of all damage taken",
+  phoenix: "Revive once with 50% health",
+  regenerate: "Heal 10 HP per turn",
+  fury: "Critical hit damage increased by 50%",
+  endurance: "Take 10% less damage from all sources"
+};
+
 function App() {
   const [gameState, setGameState] = useState('menu');
   const [difficulty, setDifficulty] = useState('medium');
@@ -48,9 +68,14 @@ function App() {
   const [waitingForActions, setWaitingForActions] = useState(false);
   const [roundInProgress, setRoundInProgress] = useState(false);
 
+  // Special ability tracking state
+  const [attackCounters, setAttackCounters] = useState({ player: 0, opponent: 0 }); // For Rhythm ability
+  const [damageModifiers, setDamageModifiers] = useState({ player: 0, opponent: 0 }); // For Growth ability
+  const [firstAttackUsed, setFirstAttackUsed] = useState({ player: false, opponent: false }); // For Agility ability
+
   const startGame = (mode) => {
     setGameMode(mode);
-    setGameState('difficulty');
+    setGameState('playerMode');
     setBattleLog([]);
     if (mode === 'tournament') {
       setTournamentProgress(0);
@@ -62,12 +87,19 @@ function App() {
 
   const selectDifficulty = (diff) => {
     setDifficulty(diff);
-    setGameState('playerMode');
+    setGameState('characterSelect');
   };
 
   const selectPlayerMode = (mode) => {
     setPlayerMode(mode);
-    setGameState('characterSelect');
+    if (mode === 'single') {
+      // vs AI needs difficulty selection
+      setGameState('difficulty');
+    } else {
+      // 2-player and online use balanced settings (no difficulty modifiers)
+      setDifficulty('medium');
+      setGameState('characterSelect');
+    }
   };
 
   const selectCharacter = (character) => {
@@ -113,6 +145,12 @@ function App() {
     ]);
     setPhoenixUsed({ player: false, opponent: false });
     setActiveEffects({ player: {}, opponent: {} });
+
+    // Initialize special ability tracking
+    setAttackCounters({ player: 0, opponent: 0 });
+    setDamageModifiers({ player: 0, opponent: 0 });
+    setFirstAttackUsed({ player: false, opponent: false });
+
     setPlayerAction(null);
     setOpponentAction(null);
     setWaitingForActions(true);
@@ -130,7 +168,12 @@ function App() {
     
     setActiveEffects({ player: {}, opponent: {} });
     setPhoenixUsed({ player: false, opponent: false });
-    
+
+    // Reset special ability tracking per round
+    setAttackCounters({ player: 0, opponent: 0 });
+    setDamageModifiers({ player: 0, opponent: 0 });
+    setFirstAttackUsed({ player: false, opponent: false });
+
     setBattleLog(prev => [...prev, `\n🔄 ROUND ${newRound} BEGINS!`, `${player.name} vs ${opponent.name}`, `Choose your actions!`]);
     setShowRoundResult(false);
     setIsPlayerTurn(true);
@@ -229,30 +272,69 @@ function App() {
     // Action interactions
     if (p1Action === 'attack' && p2Action === 'attack') {
       // Both attack - both take damage
-      p1Damage = applyDamage(p2BaseDamage, playerShield, player);
-      p2Damage = applyDamage(p1BaseDamage, opponentShield, opponent);
+      const p1Result = applyDamage(p2BaseDamage, playerShield, player);
+      const p2Result = applyDamage(p1BaseDamage, opponentShield, opponent);
+      p1Damage = p1Result.damage;
+      p2Damage = p2Result.damage;
+
+      if (p1Result.dodged) messages.push(`🌪️ ${player.name} dodges the attack!`);
+      else if (p1Result.miraged) messages.push(`✨ ${opponent.name}'s attack misses due to ${player.name}'s mirage!`);
+      else if (p1Result.shieldAbility) messages.push(`🛡️ ${player.name}'s shield ability blocks half the damage!`);
+
+      if (p2Result.dodged) messages.push(`🌪️ ${opponent.name} dodges the attack!`);
+      else if (p2Result.miraged) messages.push(`✨ ${player.name}'s attack misses due to ${opponent.name}'s mirage!`);
+      else if (p2Result.shieldAbility) messages.push(`🛡️ ${opponent.name}'s shield ability blocks half the damage!`);
+
       messages.push(`⚔️ Both warriors attack! ${player.name} deals ${p2Damage} damage, ${opponent.name} deals ${p1Damage} damage!`);
-      
+
     } else if (p1Action === 'attack' && p2Action === 'block') {
       // P1 attacks, P2 blocks - reduced damage
-      p2Damage = Math.floor(applyDamage(p1BaseDamage, opponentShield, opponent) * 0.3);
+      const p2Result = applyDamage(p1BaseDamage, opponentShield, opponent);
+      p2Damage = Math.floor(p2Result.damage * 0.3);
+
+      if (p2Result.dodged) messages.push(`🌪️ ${opponent.name} dodges the attack!`);
+      else if (p2Result.miraged) messages.push(`✨ ${player.name}'s attack misses due to ${opponent.name}'s mirage!`);
+      else if (p2Result.shieldAbility) messages.push(`🛡️ ${opponent.name}'s shield ability blocks additional damage!`);
+
       messages.push(`🛡️ ${opponent.name} blocks! Only ${p2Damage} damage taken!`);
-      
+
     } else if (p1Action === 'attack' && p2Action === 'counter') {
       // P1 attacks, P2 counters - P2 takes damage but deals 1.5x back
-      p2Damage = applyDamage(p1BaseDamage, opponentShield, opponent);
-      p1Damage = Math.floor(applyDamage(p2BaseDamage, playerShield, player) * 1.5);
+      const p2Result = applyDamage(p1BaseDamage, opponentShield, opponent);
+      const p1Result = applyDamage(p2BaseDamage, playerShield, player);
+      p2Damage = p2Result.damage;
+      p1Damage = Math.floor(p1Result.damage * 1.5);
+
+      if (p2Result.dodged) messages.push(`🌪️ ${opponent.name} dodges the attack!`);
+      else if (p2Result.miraged) messages.push(`✨ ${player.name}'s attack misses!`);
+      else if (p2Result.shieldAbility) messages.push(`🛡️ ${opponent.name}'s shield ability activates!`);
+
+      if (p1Result.dodged) messages.push(`🌪️ ${player.name} dodges the counter!`);
+      else if (p1Result.miraged) messages.push(`✨ ${opponent.name}'s counter misses!`);
+
       messages.push(`💥 ${opponent.name} counters! Takes ${p2Damage} but deals ${p1Damage} back!`);
-      
+
     } else if (p1Action === 'attack' && p2Action === 'heal') {
       // P1 attacks, P2 heals - P2 takes damage but heals
-      p2Damage = applyDamage(p1BaseDamage, opponentShield, opponent);
+      const p2Result = applyDamage(p1BaseDamage, opponentShield, opponent);
+      p2Damage = p2Result.damage;
       p2Heal = Math.floor(opponent.maxHealth * 0.2);
+
+      if (p2Result.dodged) messages.push(`🌪️ ${opponent.name} dodges while healing!`);
+      else if (p2Result.miraged) messages.push(`✨ ${player.name}'s attack misses!`);
+      else if (p2Result.shieldAbility) messages.push(`🛡️ ${opponent.name}'s shield ability activates!`);
+
       messages.push(`❤️ ${opponent.name} heals for ${p2Heal} but takes ${p2Damage} damage!`);
-      
+
     } else if (p1Action === 'block' && p2Action === 'attack') {
       // P1 blocks, P2 attacks - reduced damage
-      p1Damage = Math.floor(applyDamage(p2BaseDamage, playerShield, player) * 0.3);
+      const p1Result = applyDamage(p2BaseDamage, playerShield, player);
+      p1Damage = Math.floor(p1Result.damage * 0.3);
+
+      if (p1Result.dodged) messages.push(`🌪️ ${player.name} dodges the attack!`);
+      else if (p1Result.miraged) messages.push(`✨ ${opponent.name}'s attack misses!`);
+      else if (p1Result.shieldAbility) messages.push(`🛡️ ${player.name}'s shield ability activates!`);
+
       messages.push(`🛡️ ${player.name} blocks! Only ${p1Damage} damage taken!`);
       
     } else if (p1Action === 'block' && p2Action === 'block') {
@@ -274,8 +356,18 @@ function App() {
       
     } else if (p1Action === 'counter' && p2Action === 'attack') {
       // P1 counters, P2 attacks - P1 takes damage but deals 1.5x back
-      p1Damage = applyDamage(p2BaseDamage, playerShield, player);
-      p2Damage = Math.floor(applyDamage(p1BaseDamage, opponentShield, opponent) * 1.5);
+      const p1Result = applyDamage(p2BaseDamage, playerShield, player);
+      const p2Result = applyDamage(p1BaseDamage, opponentShield, opponent);
+      p1Damage = p1Result.damage;
+      p2Damage = Math.floor(p2Result.damage * 1.5);
+
+      if (p1Result.dodged) messages.push(`🌪️ ${player.name} dodges the attack!`);
+      else if (p1Result.miraged) messages.push(`✨ ${opponent.name}'s attack misses!`);
+
+      if (p2Result.dodged) messages.push(`🌪️ ${opponent.name} dodges the counter!`);
+      else if (p2Result.miraged) messages.push(`✨ ${player.name}'s counter misses!`);
+      else if (p2Result.shieldAbility) messages.push(`🛡️ ${opponent.name}'s shield ability activates!`);
+
       messages.push(`💥 ${player.name} counters! Takes ${p1Damage} but deals ${p2Damage} back!`);
       
     } else if (p1Action === 'counter' && p2Action === 'block') {
@@ -296,8 +388,14 @@ function App() {
       
     } else if (p1Action === 'heal' && p2Action === 'attack') {
       // P1 heals, P2 attacks - P1 takes damage but heals
-      p1Damage = applyDamage(p2BaseDamage, playerShield, player);
+      const p1Result = applyDamage(p2BaseDamage, playerShield, player);
+      p1Damage = p1Result.damage;
       p1Heal = Math.floor(player.maxHealth * 0.2);
+
+      if (p1Result.dodged) messages.push(`🌪️ ${player.name} dodges while healing!`);
+      else if (p1Result.miraged) messages.push(`✨ ${opponent.name}'s attack misses!`);
+      else if (p1Result.shieldAbility) messages.push(`🛡️ ${player.name}'s shield ability activates!`);
+
       messages.push(`❤️ ${player.name} heals for ${p1Heal} but takes ${p1Damage} damage!`);
       
     } else if (p1Action === 'heal' && p2Action === 'block') {
@@ -317,7 +415,69 @@ function App() {
       p2Heal = Math.floor(opponent.maxHealth * 0.2);
       messages.push(`💚 Both warriors heal! ${player.name} +${p1Heal}, ${opponent.name} +${p2Heal}!`);
     }
-    
+
+    // Combo ability (Fatima): 15% chance for double damage
+    if (player.specialAbility === 'combo' && p1Action === 'attack' && p2Damage > 0 && Math.random() < 0.15) {
+      p2Damage = p2Damage * 2;
+      messages.push(`🔥 ${player.name}'s combo strikes twice! Damage doubled!`);
+    }
+    if (opponent.specialAbility === 'combo' && p2Action === 'attack' && p1Damage > 0 && Math.random() < 0.15) {
+      p1Damage = p1Damage * 2;
+      messages.push(`🔥 ${opponent.name}'s combo strikes twice! Damage doubled!`);
+    }
+
+    // Lifesteal ability (Zara): Heal for 15% of damage dealt
+    if (player.specialAbility === 'lifesteal' && p2Damage > 0) {
+      const lifestealHeal = Math.floor(p2Damage * 0.15);
+      p1Heal += lifestealHeal;
+      messages.push(`💉 ${player.name} lifesteals ${lifestealHeal} HP!`);
+    }
+    if (opponent.specialAbility === 'lifesteal' && p1Damage > 0) {
+      const lifestealHeal = Math.floor(p1Damage * 0.15);
+      p2Heal += lifestealHeal;
+      messages.push(`💉 ${opponent.name} lifesteals ${lifestealHeal} HP!`);
+    }
+
+    // Counter ability (Amara): 20% chance to return 30% of damage taken
+    if (player.specialAbility === 'counter' && p1Damage > 0 && Math.random() < 0.20) {
+      const counterDamage = Math.floor(p1Damage * 0.30);
+      p2Damage += counterDamage;
+      messages.push(`⚡ ${player.name}'s counter ability strikes back for ${counterDamage} damage!`);
+    }
+    if (opponent.specialAbility === 'counter' && p2Damage > 0 && Math.random() < 0.20) {
+      const counterDamage = Math.floor(p2Damage * 0.30);
+      p1Damage += counterDamage;
+      messages.push(`⚡ ${opponent.name}'s counter ability strikes back for ${counterDamage} damage!`);
+    }
+
+    // Reflect ability (Makena): Reflect 10% of damage taken
+    if (player.specialAbility === 'reflect' && p1Damage > 0) {
+      const reflectDamage = Math.floor(p1Damage * 0.10);
+      p2Damage += reflectDamage;
+      messages.push(`💎 ${player.name} reflects ${reflectDamage} damage back!`);
+    }
+    if (opponent.specialAbility === 'reflect' && p2Damage > 0) {
+      const reflectDamage = Math.floor(p2Damage * 0.10);
+      p1Damage += reflectDamage;
+      messages.push(`💎 ${opponent.name} reflects ${reflectDamage} damage back!`);
+    }
+
+    // Track attack counters for Rhythm ability (Sekou)
+    if (p1Action === 'attack') {
+      setAttackCounters(prev => ({ ...prev, player: prev.player + 1 }));
+    }
+    if (p2Action === 'attack') {
+      setAttackCounters(prev => ({ ...prev, opponent: prev.opponent + 1 }));
+    }
+
+    // Mark first attack used for Agility ability (Kwame)
+    if (p1Action === 'attack' && player.specialAbility === 'agility' && !firstAttackUsed.player) {
+      setFirstAttackUsed(prev => ({ ...prev, player: true }));
+    }
+    if (p2Action === 'attack' && opponent.specialAbility === 'agility' && !firstAttackUsed.opponent) {
+      setFirstAttackUsed(prev => ({ ...prev, opponent: true }));
+    }
+
     // Apply damage and healing
     const newP1Health = Math.max(0, Math.min(player.maxHealth, player.health - p1Damage + p1Heal));
     const newP2Health = Math.max(0, Math.min(opponent.maxHealth, opponent.health - p2Damage + p2Heal));
@@ -377,7 +537,17 @@ function App() {
           setOpponent(o => ({ ...o, health: Math.min(o.maxHealth, o.health + 5) }));
           setBattleLog(prev => [...prev, `💚 ${opponent.name} regenerated 5 HP!`]);
         }
-        
+
+        // Growth ability (Olu): Gain +5 damage per turn (capped at +50)
+        if (player.specialAbility === 'growth' && damageModifiers.player < 50) {
+          setDamageModifiers(prev => ({ ...prev, player: Math.min(50, prev.player + 5) }));
+          setBattleLog(prev => [...prev, `📈 ${player.name} grows stronger! (+5 damage, total +${Math.min(50, damageModifiers.player + 5)})`]);
+        }
+        if (opponent.specialAbility === 'growth' && damageModifiers.opponent < 50) {
+          setDamageModifiers(prev => ({ ...prev, opponent: Math.min(50, prev.opponent + 5) }));
+          setBattleLog(prev => [...prev, `📈 ${opponent.name} grows stronger! (+5 damage, total +${Math.min(50, damageModifiers.opponent + 5)})`]);
+        }
+
         // Random battle events
         checkBattleEvent();
         
@@ -391,9 +561,25 @@ function App() {
 
   const calculateBaseDamage = (character, isPlayer) => {
     const diffSettings = DIFFICULTY_SETTINGS[difficulty];
-    const variance = 1 + (Math.random() * DAMAGE_VARIANCE * 2 - DAMAGE_VARIANCE);
+
+    // Flow ability (Imani): Damage varies more (±20% instead of ±10%)
+    const damageVariance = character.specialAbility === 'flow' ? 0.20 : DAMAGE_VARIANCE;
+    const variance = 1 + (Math.random() * damageVariance * 2 - damageVariance);
     let damage = Math.floor(character.damage * variance);
-    
+
+    // Growth ability (Olu): Gains +5 damage per turn (capped at +50)
+    const side = isPlayer ? 'player' : 'opponent';
+    if (character.specialAbility === 'growth') {
+      damage += damageModifiers[side];
+    }
+
+    // Berserk ability (Desta): Damage increases as health decreases
+    if (character.specialAbility === 'berserk') {
+      const healthPercent = character.health / character.maxHealth;
+      const berserkMultiplier = 1 + (1 - healthPercent); // At 50% HP = 1.5x, at 25% HP = 1.75x, at 0% HP = 2x
+      damage = Math.floor(damage * berserkMultiplier);
+    }
+
     if (playerMode !== 'local2p') {
       if (isPlayer) {
         damage = Math.floor(damage * diffSettings.playerDamageBonus);
@@ -406,31 +592,53 @@ function App() {
     if (effects.damageBoost) {
       damage = Math.floor(damage * 1.3);
     }
-    
-    const isCritical = Math.random() < CRITICAL_HIT_CHANCE;
+
+    // Rhythm ability (Sekou): Every 3rd attack is guaranteed critical
+    const isRhythmCritical = character.specialAbility === 'rhythm' && attackCounters[side] % 3 === 2;
+
+    // Agility ability (Kwame): First attack per round is critical
+    const isAgilityCritical = character.specialAbility === 'agility' && !firstAttackUsed[side];
+
+    const isCritical = isRhythmCritical || isAgilityCritical || (Math.random() < CRITICAL_HIT_CHANCE);
     if (isCritical) {
       const critMultiplier = (isPlayer && player?.specialAbility === 'fury') || (!isPlayer && opponent?.specialAbility === 'fury') ? 2.0 : CRITICAL_HIT_MULTIPLIER;
       damage = Math.floor(damage * critMultiplier);
     }
-    
+
     return damage;
   };
 
   const applyDamage = (damage, shield, defender) => {
     let finalDamage = damage;
-    
-    // Apply shield reduction
+
+    // Dodge ability (Jabari): 20% chance to completely avoid attacks
+    if (defender.specialAbility === 'dodge' && Math.random() < 0.20) {
+      return { damage: 0, dodged: true };
+    }
+
+    // Mirage ability (Ayana): 15% chance for opponent to miss
+    if (defender.specialAbility === 'mirage' && Math.random() < 0.15) {
+      return { damage: 0, miraged: true };
+    }
+
+    // Apply shield reduction from item
     if (shield > 0) {
       const shieldReduction = Math.min(shield, Math.floor(damage * 0.5));
       finalDamage = Math.max(0, damage - shieldReduction);
     }
-    
-    // Apply endurance
+
+    // Shield ability (Kofi): 25% chance to block 50% of damage
+    if (defender.specialAbility === 'shield' && Math.random() < 0.25) {
+      finalDamage = Math.floor(finalDamage * 0.5);
+      return { damage: finalDamage, shieldAbility: true };
+    }
+
+    // Endurance ability (Chike): Take 10% less damage
     if (defender.specialAbility === 'endurance') {
       finalDamage = Math.floor(finalDamage * 0.9);
     }
-    
-    return finalDamage;
+
+    return { damage: finalDamage };
   };
 
   const checkBattleEvent = () => {
@@ -623,7 +831,7 @@ function App() {
             <Badge className="mt-4 text-lg px-4 py-2 bg-green-600">Action-Based Combat System!</Badge>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
             <Card className="bg-gradient-to-br from-amber-50 to-orange-100 border-4 border-amber-600 hover:scale-105 transition-transform cursor-pointer" onClick={() => startGame('quick')}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-2xl">
@@ -635,7 +843,19 @@ function App() {
                 <p className="text-gray-700">Strategic best of 5 with action choices!</p>
               </CardContent>
             </Card>
-            
+
+            <Card className="bg-gradient-to-br from-blue-50 to-cyan-100 border-4 border-blue-600 hover:scale-105 transition-transform cursor-pointer" onClick={() => window.location.href = '/online'}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-2xl">
+                  <Users className="w-8 h-8 text-blue-600" />
+                  Online Multiplayer
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700">Play with friends or random opponents!</p>
+              </CardContent>
+            </Card>
+
             <Card className="bg-gradient-to-br from-purple-50 to-pink-100 border-4 border-purple-600 hover:scale-105 transition-transform cursor-pointer" onClick={() => startGame('tournament')}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-2xl">
@@ -647,7 +867,7 @@ function App() {
                 <p className="text-gray-700">Face all 16 warriors in tactical battles!</p>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-4 border-green-600 hover:scale-105 transition-transform cursor-pointer" onClick={() => startGame('survival')}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-2xl">
@@ -732,8 +952,8 @@ function App() {
           </div>
           
           <div className="text-center">
-            <Button onClick={returnToMenu} variant="outline" className="text-white border-white hover:bg-white/10">
-              Back to Menu
+            <Button onClick={() => setGameState('playerMode')} variant="outline" className="text-white border-white hover:bg-white/10">
+              Back
             </Button>
           </div>
         </div>
@@ -798,7 +1018,7 @@ function App() {
           </div>
           
           <div className="text-center">
-            <Button onClick={() => setGameState('difficulty')} variant="outline" className="text-white border-white hover:bg-white/10">
+            <Button onClick={returnToMenu} variant="outline" className="text-white border-white hover:bg-white/10">
               Back
             </Button>
           </div>
@@ -871,6 +1091,14 @@ function App() {
                       </span>
                       <span className="font-bold">{char.damage}</span>
                     </div>
+                    {char.specialAbility && ABILITY_DESCRIPTIONS[char.specialAbility] && (
+                      <div className="mt-2 pt-2 border-t border-purple-500/30">
+                        <p className="text-xs text-purple-300 flex items-start gap-1">
+                          <Sparkles className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          <span>{ABILITY_DESCRIPTIONS[char.specialAbility]}</span>
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -878,7 +1106,7 @@ function App() {
           </div>
           
           <div className="text-center mt-8">
-            <Button onClick={() => setGameState('playerMode')} variant="outline" className="text-white border-white hover:bg-white/10">
+            <Button onClick={() => setGameState(playerMode === 'single' ? 'difficulty' : 'playerMode')} variant="outline" className="text-white border-white hover:bg-white/10">
               Back
             </Button>
           </div>

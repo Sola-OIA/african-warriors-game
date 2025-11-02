@@ -4,12 +4,18 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import { AuthProvider } from "./contexts/AuthProvider";
+import Game from "./App.jsx";
+import OnlineMultiplayer from "./pages/OnlineMultiplayer";
 
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      <Route path={"/"} component={Game} />
+      <Route path={"/online"} component={OnlineMultiplayer} />
+      <Route path={"/join/:gameCode"}>
+        {(params) => <OnlineMultiplayer joinGameCode={params.gameCode} />}
+      </Route>
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -29,10 +35,12 @@ function App() {
         defaultTheme="light"
         // switchable
       >
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

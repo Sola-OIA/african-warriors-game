@@ -1,0 +1,45 @@
+# Server code (not used on Vercel)
+server/
+
+# Supabase files (deployed separately)
+supabase/
+
+# Documentation
+*.md
+README.md
+CLAUDE.md
+IMPLEMENTATION.md
+TESTING_MULTIPLAYER.md
+
+# Claude Code
+.claude/
+
+# Development files
+.playwright-mcp/
+nul
+
+# Build artifacts (will be rebuilt)
+dist/
+node_modules/
+
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Scripts
+update-hp.js
+auto-attack.js
+
+# Git
+.git/
+.gitignore
+
+# Environment files (use Vercel dashboard instead)
+.env
+.env.local
+.env.production
+
+# Misc
+package-lock.json
