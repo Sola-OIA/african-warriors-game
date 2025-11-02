@@ -1052,10 +1052,11 @@ function App() {
                 onClick={() => selectCharacter(char)}
               >
                 <div className="relative bg-gradient-to-br from-slate-700 to-slate-800">
-                  <img 
-                    src={char.image} 
-                    alt={char.name} 
+                  <img
+                    src={char.image}
+                    alt={char.name}
                     className="w-full h-48 object-cover object-top group-hover:scale-110 transition-transform duration-300"
+                    loading="lazy"
                     onLoad={() => console.log('Image loaded:', char.name, char.image)}
                     onError={(e) => {
                       console.error('Failed to load character image:', char.name, char.image);
@@ -1283,10 +1284,11 @@ function App() {
               </CardHeader>
               <CardContent>
                 <div className="relative w-full h-64 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-blue-800 to-blue-600">
-                  <img 
-                    src={player.image} 
-                    alt={player.name} 
+                  <img
+                    src={player.image}
+                    alt={player.name}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                     style={{ objectPosition: 'center 20%' }}
                     onError={(e) => {
                       console.error('Failed to load player image:', player.image);
@@ -1337,10 +1339,11 @@ function App() {
               </CardHeader>
               <CardContent>
                 <div className="relative w-full h-64 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-red-800 to-red-600">
-                  <img 
-                    src={opponent.image} 
-                    alt={opponent.name} 
+                  <img
+                    src={opponent.image}
+                    alt={opponent.name}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                     style={{ objectPosition: 'center 20%' }}
                     onError={(e) => {
                       console.error('Failed to load opponent image:', opponent.image);
@@ -1533,7 +1536,7 @@ function App() {
             <div className="text-center">
               {player && (
                 <div className="mb-4">
-                  <img src={player.image} alt={player.name} className="w-48 h-48 object-cover rounded-full mx-auto border-4 border-yellow-500" style={{ objectPosition: 'center 20%' }} />
+                  <img src={player.image} alt={player.name} className="w-48 h-48 object-cover rounded-full mx-auto border-4 border-yellow-500" loading="lazy" style={{ objectPosition: 'center 20%' }} />
                   <h3 className="text-2xl font-bold text-white mt-4">{player.name}</h3>
                   <p className="text-purple-300">{player.country}</p>
                   <div className="text-3xl font-bold text-yellow-400 mt-4">

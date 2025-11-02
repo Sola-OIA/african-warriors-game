@@ -576,6 +576,7 @@ export default function OnlineBattle({
                 src={myCharacter.image}
                 alt={myCharacter.name}
                 className="w-full h-64 object-cover rounded-lg mb-2"
+                loading="lazy"
                 style={{ objectPosition: 'center 20%' }}
               />
               <h3 className="text-white font-bold text-lg">{myCharacter.name}</h3>
@@ -603,6 +604,7 @@ export default function OnlineBattle({
                     src={opponentCharacter.image}
                     alt={opponentCharacter.name}
                     className="w-full h-64 object-cover rounded-lg mb-2"
+                    loading="lazy"
                     style={{ objectPosition: 'center 20%' }}
                   />
                   <h3 className="text-white font-bold text-lg">{opponentCharacter.name}</h3>

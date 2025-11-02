@@ -322,6 +322,7 @@ export default function OnlineMultiplayer({ joinGameCode }: OnlineMultiplayerPro
                   src={char.image}
                   alt={char.name}
                   className="w-full h-48 object-cover"
+                  loading="lazy"
                   style={{ objectPosition: 'center 20%' }}
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-3">

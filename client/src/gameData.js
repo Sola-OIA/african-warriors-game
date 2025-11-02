@@ -1,20 +1,20 @@
 // Character data for African Warriors game - BALANCED VERSION
-import amaraImg from './assets/amara_nigeria.png';
-import kofiImg from './assets/kofi_ghana.png';
-import zaraImg from './assets/zara_egypt.png';
-import jabariImg from './assets/jabari_kenya.png';
-import nalediImg from './assets/naledi_south_africa.png';
-import destaImg from './assets/desta_ethiopia.png';
-import fatimaImg from './assets/fatima_morocco.png';
-import chikeImg from './assets/chike_tanzania.png';
-import imaniImg from './assets/imani_uganda.png';
-import sekouImg from './assets/sekou_senegal.png';
-import ayanaImg from './assets/ayana_algeria.png';
-import kwameImg from './assets/kwame_ivory_coast.png';
-import niaImg from './assets/nia_rwanda.png';
-import tariqImg from './assets/tariq_tunisia.png';
-import makenaImg from './assets/makena_botswana.png';
-import oluImg from './assets/olu_angola.png';
+import amaraImg from './assets/amara_nigeria.webp';
+import kofiImg from './assets/kofi_ghana.webp';
+import zaraImg from './assets/zara_egypt.webp';
+import jabariImg from './assets/jabari_kenya.webp';
+import nalediImg from './assets/naledi_south_africa.webp';
+import destaImg from './assets/desta_ethiopia.webp';
+import fatimaImg from './assets/fatima_morocco.webp';
+import chikeImg from './assets/chike_tanzania.webp';
+import imaniImg from './assets/imani_uganda.webp';
+import sekouImg from './assets/sekou_senegal.webp';
+import ayanaImg from './assets/ayana_algeria.webp';
+import kwameImg from './assets/kwame_ivory_coast.webp';
+import niaImg from './assets/nia_rwanda.webp';
+import tariqImg from './assets/tariq_tunisia.webp';
+import makenaImg from './assets/makena_botswana.webp';
+import oluImg from './assets/olu_angola.webp';
 
 // BALANCED STATS - All characters now competitive
 export const characters = [
