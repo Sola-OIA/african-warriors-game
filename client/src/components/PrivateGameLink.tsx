@@ -260,7 +260,7 @@ export default function PrivateGameLink({
               <p className="text-amber-100">Waiting for opponent to join...</p>
             </div>
 
-            <Button onClick={onBack} variant="outline" className="border-amber-500/50 text-white hover:bg-amber-500/20">
+            <Button onClick={onBack} variant="outline" className="border-amber-500/50 hover:bg-amber-500/20">
               Cancel Game
             </Button>
           </div>

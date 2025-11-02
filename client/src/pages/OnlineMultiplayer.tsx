@@ -201,7 +201,7 @@ export default function OnlineMultiplayer({ joinGameCode }: OnlineMultiplayerPro
                 <Button
                   onClick={signInAnonymously}
                   variant="outline"
-                  className="w-full border-amber-500/50 text-white hover:bg-amber-500/20"
+                  className="w-full border-amber-500/50 hover:bg-amber-500/20"
                   size="lg"
                 >
                   Continue as Guest

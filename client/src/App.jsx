@@ -952,7 +952,7 @@ function App() {
           </div>
           
           <div className="text-center">
-            <Button onClick={() => setGameState('playerMode')} variant="outline" className="text-white border-white hover:bg-white/10">
+            <Button onClick={() => setGameState('playerMode')} variant="outline" className="border-white hover:bg-white/10">
               Back
             </Button>
           </div>
@@ -1018,7 +1018,7 @@ function App() {
           </div>
           
           <div className="text-center">
-            <Button onClick={returnToMenu} variant="outline" className="text-white border-white hover:bg-white/10">
+            <Button onClick={returnToMenu} variant="outline" className="border-white hover:bg-white/10">
               Back
             </Button>
           </div>
@@ -1107,7 +1107,7 @@ function App() {
           </div>
           
           <div className="text-center mt-8">
-            <Button onClick={() => setGameState(playerMode === 'single' ? 'difficulty' : 'playerMode')} variant="outline" className="text-white border-white hover:bg-white/10">
+            <Button onClick={() => setGameState(playerMode === 'single' ? 'difficulty' : 'playerMode')} variant="outline" className="border-white hover:bg-white/10">
               Back
             </Button>
           </div>
@@ -1503,7 +1503,7 @@ function App() {
           </Card>
           
           <div className="text-center mt-4">
-            <Button onClick={returnToMenu} variant="outline" className="text-white border-white hover:bg-white/10">
+            <Button onClick={returnToMenu} variant="outline" className="border-white hover:bg-white/10">
               Forfeit & Return to Menu
             </Button>
           </div>
